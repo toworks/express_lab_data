@@ -25,6 +25,26 @@ package _ssh;{
 
 			print $remotedate, "\n";
 			$buf = undef;
+
+ 
+# (a) read using SCP
+#my $passwd;# = IO::Scalar->new;
+#die "can't fetch /etc/passwd" unless
+#my $passwd = 'tst';
+# $self->get('ssh')->scp_get('tst.log', $passwd);
+#$passwd->seek(0, 0);
+#_read($passwd);
+ 
+ my $fh = $self->get('ssh')->sftp->open('tst.log')
+  or $self->get('ssh')->die_with_error;
+ 
+print while <$fh>;
+
+# (b) read a line at a time with SFTP
+#my $sftp = $ssh2->sftp;
+#my $file = $sftp->open('/etc/passwd') or $sftp->die_with_error;
+#_read($file);
+
 =comm
 			foreach my $type (keys %{$measuring}) {
 				foreach (keys %{$measuring->{$type}}) {
@@ -53,6 +73,15 @@ package _ssh;{
 			 $self->disconnect();
 	}
     return(\%values);
+  }
+
+  sub _read {
+	my $handle = shift;
+	while (my $line = <$handle>) {
+		chomp $line;
+		$line =~ s/:.*$//;
+		print "found user '$line'\n";
+	}
   }
 }
 1;
