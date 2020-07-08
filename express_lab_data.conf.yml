@@ -1,0 +1,9 @@
+ssh:
+    host: krr-fas45
+    port: 2022
+    user: localadmin
+    password: _Start123
+
+app:
+    cycle: 1
+    debug: true
