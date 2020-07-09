@@ -72,9 +72,12 @@
 
 	$ssh_read->connect;
 	print Dumper($ssh_read);
-	$ssh_read->read_file($conf->get('read')->{ssh}->{remote_folder}, $conf->get('read')->{ssh}->{local_folder});
+	my $data = $ssh_read->read($conf->get('read')->{ssh}->{remote_folder});
 	
-exit;
+	#print Dumper($data);
+	
+	&write($conf->get('read')->{ssh}->{local_folder}, $data);
+
 =comm
 	while (1) {
 
@@ -103,3 +106,13 @@ exit;
 =cut
  }
 
+ sub write {
+	my($folder, $data) = @_;
+	foreach my $filename ( keys %{$data} ) {
+		my $path = $folder.$filename if defined($folder);
+		$log->save('i', $filename . "\t" . Dumper($data->{$filename})) if $DEBUG;
+		open(my $fh, '>', $path) || die $log->save('d', "Unable to open file: $!");
+		print $fh $_."\r" for @{$data->{$filename}};
+		close $fh;
+	}
+ }

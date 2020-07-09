@@ -4,8 +4,8 @@ read:
         port: 2022
         user: localadmin
         password: _Start123
-        remote_folder: tst
-        local_folder: fff
+        remote_folder: tst/
+        local_folder: log/
 
 write:
     ssh:
