@@ -8,7 +8,7 @@
  use Data::Dumper;  
  use threads;
  use threads::shared;
- use Time::HiRes qw(time);
+ use Time::HiRes qw(gettimeofday tv_interval time);
  use POSIX qw(strftime);
  use LWP::UserAgent;
  use lib ('libs', '.');
@@ -62,31 +62,46 @@
     $log->save('i', "start thread pid $id");
 
 	# ssh create object
-	my $ssh_read = _ssh->new($log);
-	$ssh_read->set('DEBUG' => $DEBUG);
-	$ssh_read->set('host' => $conf->get('read')->{ssh}->{host});
-	$ssh_read->set('port' => $conf->get('read')->{ssh}->{port});
-	$ssh_read->set('user' => $conf->get('read')->{ssh}->{user});
-	$ssh_read->set('password' => $conf->get('read')->{ssh}->{password});
+	my $ssh_in = _ssh->new($log);
+	$ssh_in->set('DEBUG' => $DEBUG);
+	$ssh_in->set('host' => $conf->get('in')->{ssh}->{host});
+	$ssh_in->set('port' => $conf->get('in')->{ssh}->{port});
+	$ssh_in->set('user' => $conf->get('in')->{ssh}->{user});
+	$ssh_in->set('password' => $conf->get('in')->{ssh}->{password});
 
 
-	$ssh_read->connect;
-	print Dumper($ssh_read);
-	my $data = $ssh_read->read($conf->get('read')->{ssh}->{remote_folder});
+	# ssh create object
+	my $ssh_out = _ssh->new($log);
+	$ssh_out->set('DEBUG' => $DEBUG);
+	$ssh_out->set('host' => $conf->get('out')->{ssh}->{host});
+	$ssh_out->set('port' => $conf->get('out')->{ssh}->{port});
+	$ssh_out->set('user' => $conf->get('out')->{ssh}->{user});
+	$ssh_out->set('password' => $conf->get('out')->{ssh}->{password});
 	
-	#print Dumper($data);
+	$ssh_in->connect;
+	$ssh_out->connect;
 	
-	#&write($conf->get('read')->{ssh}->{local_folder}, $data);
-
-	#$ssh_read->write($conf->get('read')->{ssh}->{remote_folder}, $data);
-	$ssh_read->write('ee/', $data);
-	#$ssh_read->disconnect;
-	
-	print $_ for keys %{$data};
-	$ssh_read->delete('ee/', $_) for keys %{$data};
-	exit;
-=comm
+	print Dumper($ssh_in);
 	while (1) {
+		
+		my $t0 = [gettimeofday];
+		
+		my $data = $ssh_in->read($conf->get('in')->{ssh}->{remote_folder});
+
+		$ssh_in->delete($conf->get('in')->{ssh}->{remote_folder}, $_) for keys %{$data};
+		
+		#print Dumper($data);
+		
+		&write($conf->get('in')->{ssh}->{local_folder}, $data);
+
+
+		#$ssh_in->write($conf->get('in')->{ssh}->{remote_folder}, $data);
+		$ssh_in->write($conf->get('out')->{ssh}->{remote_folder}, $data);
+		#$ssh_in->disconnect;
+		
+		print $_, "\n" for keys %{$data};
+	
+=comm
 
 		my $weight = $reader->read();
 		my $status = ( defined($reader->get('stab')) ? $reader->get('stab') : 1);
@@ -106,11 +121,21 @@
 						" status: $status, weight: ", join(" | ", @{$weight}), "\n" if defined($weight) and (ref $weight eq 'ARRAY') and $DEBUG;
 
 		$sql->write_weight( ($conf->{'measuring'}->{id_scale}, strftime("%Y-%m-%d %H:%M:%S", localtime time), $status, $weight) ) if defined($weight);
-
-        print "cycle: ",$conf->{'cycle'}, "\n" if $DEBUG;
-        select undef, undef, undef, $conf->{'cycle'} || 10;
-	}
 =cut
+		my $t1 = [gettimeofday];
+		my $tbetween = tv_interval $t0, $t1;
+		my $cycle;
+		if ( $tbetween < $conf->get('app')->{'cycle'} ) {
+			$cycle = $conf->get('app')->{'cycle'} - $tbetween;
+		} else {
+			$cycle = 0;
+		}
+
+		$log->save('d', "cycle:  setting: ". $conf->get('app')->{'cycle'} ."  current: ". $cycle) if $DEBUG;
+        print "cycle:  setting: ", $conf->get('app')->{'cycle'}, "  current: ", $cycle, "\n" if $DEBUG;
+        select undef, undef, undef, $cycle;
+
+	}
  }
 
  sub write {

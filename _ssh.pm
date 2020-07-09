@@ -44,9 +44,9 @@ package _ssh;{
 	eval{
 			foreach my $filename ( keys %{$data} ) {
 				my $path = $folder.$filename if defined($folder);
+				$self->{log}->save('i', "write: ". $filename . "\t" . Dumper($data->{$filename})) if $self->{obj}->{'DEBUG'};
 				my $fh = $self->get('ssh')->sftp->open($path, O_WRONLY | O_CREAT | O_TRUNC) || die $self->get('ssh')->die_with_error;
 				print $fh $_."\r\n" for @{$data->{$filename}};
-				$self->{log}->save('i', "write: ". $filename . "\t" . Dumper($data->{$filename})) if $self->{obj}->{'DEBUG'};
 				close $fh;
 			}
 	};
@@ -63,8 +63,8 @@ package _ssh;{
 
 	eval{
 			my $path = $folder.$filename if defined($folder);
-			$self->get('ssh')->sftp->unlink($path) || die $self->get('ssh')->die_with_error;
 			$self->{log}->save('i', "delete file: ". $path) if $self->{obj}->{'DEBUG'};
+			$self->get('ssh')->sftp->unlink($path) || die $self->get('ssh')->die_with_error;
 	};
 	if($@) { $self->set('error' => 1);
 			 $self->{log}->save('e', "$@");

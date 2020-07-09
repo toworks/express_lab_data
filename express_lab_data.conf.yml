@@ -1,4 +1,4 @@
-read:
+in:
     ssh:
         host: krr-fas45
         port: 2022
@@ -7,7 +7,7 @@ read:
         remote_folder: tst/
         local_folder: log/
 
-write:
+out:
     ssh:
         host: krr-fas45
         port: 2022
@@ -16,5 +16,5 @@ write:
         remote_folder: ee/
 
 app:
-    cycle: 1
+    cycle: 30
     debug: true
