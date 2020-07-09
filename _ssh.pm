@@ -6,6 +6,7 @@ package _ssh;{
   use parent "ssh";
   use constant BUFLEN => 10_0000;
   use Data::Dumper;
+  use Fcntl;
 
   sub read {
     my($self, $folder) = @_;
@@ -32,6 +33,43 @@ package _ssh;{
 			 $self->disconnect();
 	}
     return(\%data);
+  }
+  
+  sub write {
+    my($self, $folder, $data) = @_;
+	my(%data);
+
+	$self->connect() if ( $self->get('error') == 1 );
+
+	eval{
+			foreach my $filename ( keys %{$data} ) {
+				my $path = $folder.$filename if defined($folder);
+				my $fh = $self->get('ssh')->sftp->open($path, O_WRONLY | O_CREAT | O_TRUNC) || die $self->get('ssh')->die_with_error;
+				print $fh $_."\r\n" for @{$data->{$filename}};
+				$self->{log}->save('i', "write: ". $filename . "\t" . Dumper($data->{$filename})) if $self->{obj}->{'DEBUG'};
+				close $fh;
+			}
+	};
+	if($@) { $self->set('error' => 1);
+			 $self->{log}->save('e', "$@");
+			 $self->disconnect();
+	}
+  }
+
+  sub delete {
+    my($self, $folder, $filename) = @_;
+
+	$self->connect() if ( $self->get('error') == 1 );
+
+	eval{
+			my $path = $folder.$filename if defined($folder);
+			$self->get('ssh')->sftp->unlink($path) || die $self->get('ssh')->die_with_error;
+			$self->{log}->save('i', "delete file: ". $path) if $self->{obj}->{'DEBUG'};
+	};
+	if($@) { $self->set('error' => 1);
+			 $self->{log}->save('e', "$@");
+			 $self->disconnect();
+	}
   }
 }
 1;
