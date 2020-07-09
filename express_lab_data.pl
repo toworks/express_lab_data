@@ -76,8 +76,15 @@
 	
 	#print Dumper($data);
 	
-	&write($conf->get('read')->{ssh}->{local_folder}, $data);
+	#&write($conf->get('read')->{ssh}->{local_folder}, $data);
 
+	#$ssh_read->write($conf->get('read')->{ssh}->{remote_folder}, $data);
+	$ssh_read->write('ee/', $data);
+	#$ssh_read->disconnect;
+	
+	print $_ for keys %{$data};
+	$ssh_read->delete('ee/', $_) for keys %{$data};
+	exit;
 =comm
 	while (1) {
 
@@ -112,7 +119,7 @@
 		my $path = $folder.$filename if defined($folder);
 		$log->save('i', $filename . "\t" . Dumper($data->{$filename})) if $DEBUG;
 		open(my $fh, '>', $path) || die $log->save('d', "Unable to open file: $!");
-		print $fh $_."\r" for @{$data->{$filename}};
+		print $fh $_."\r\n" for @{$data->{$filename}};
 		close $fh;
 	}
  }

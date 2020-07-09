@@ -13,6 +13,7 @@ write:
         port: 2022
         user: localadmin
         password: _Start123
+        remote_folder: ee/
 
 app:
     cycle: 1
