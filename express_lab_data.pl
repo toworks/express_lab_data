@@ -85,16 +85,17 @@
 	while (1) {
 		
 		my $t0 = [gettimeofday];
-		
+=comm		
 		my $data = $ssh_in->read($conf->get('in')->{ssh}->{remote_folder});
 
 		$ssh_in->delete($conf->get('in')->{ssh}->{remote_folder}, $_) for keys %{$data};
 		
 		#print Dumper($data);
 		
-		&write($conf->get('in')->{ssh}->{local_folder}, $data);
-
-
+		&lwrite($conf->get('in')->{ssh}->{local_folder}, $data);
+=cut
+		my $data = &lread($conf->get('out')->{ssh}->{local_folder});
+		
 		#$ssh_in->write($conf->get('in')->{ssh}->{remote_folder}, $data);
 		$ssh_in->write($conf->get('out')->{ssh}->{remote_folder}, $data);
 		#$ssh_in->disconnect;
@@ -138,7 +139,7 @@
 	}
  }
 
- sub write {
+ sub lwrite {
 	my($folder, $data) = @_;
 	foreach my $filename ( keys %{$data} ) {
 		my $path = $folder.$filename if defined($folder);
@@ -148,3 +149,26 @@
 		close $fh;
 	}
  }
+
+ sub lread {
+	my($folder) = @_;
+
+	my(%data);
+
+	eval{
+			opendir(my $dh, $folder) or die "Unable to open directory: $!";
+			my @files = readdir($dh);
+			foreach my $file (@files) {
+				next if ($file =~ m/^\./);
+				open(my $fh, $folder.$file) or die "Unable to open file: $!";			
+				chomp(my @DATA = <$fh>);
+				$data{$file} = [@DATA];
+				close($fh);
+			}
+			close($dh);
+	};
+	$log->save('e', "$@") if($@);
+	$log->save('d', Dumper(\%data)) if $DEBUG;
+	return(\%data);
+ }
+ 

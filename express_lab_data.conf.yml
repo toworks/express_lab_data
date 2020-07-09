@@ -14,7 +14,8 @@ out:
         user: localadmin
         password: _Start123
         remote_folder: ee/
+        local_folder: C:\Users\saarhipov\Desktop\test\
 
 app:
-    cycle: 30
+    cycle: 20
     debug: true
