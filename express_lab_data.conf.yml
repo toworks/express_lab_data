@@ -1,8 +1,18 @@
-ssh:
-    host: krr-fas45
-    port: 2022
-    user: localadmin
-    password: _Start123
+read:
+    ssh:
+        host: krr-fas45
+        port: 2022
+        user: localadmin
+        password: _Start123
+        remote_folder: tst
+        local_folder: fff
+
+write:
+    ssh:
+        host: krr-fas45
+        port: 2022
+        user: localadmin
+        password: _Start123
 
 app:
     cycle: 1

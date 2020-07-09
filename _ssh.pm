@@ -8,7 +8,7 @@ package _ssh;{
   use Data::Dumper;
 
   sub read_file {
-    my($self, $measuring) = @_;
+    my($self, $remote_folder, $local_folder) = @_;
 	my($data, $channel, $buf, %values, $timestamp, $value, $remotedate);
 	
 	%values = ();
@@ -35,10 +35,35 @@ package _ssh;{
 #$passwd->seek(0, 0);
 #_read($passwd);
  
- my $fh = $self->get('ssh')->sftp->open('tst.log')
+ 
+ my $dh = $self->get('ssh')->sftp->opendir($remote_folder)
+ #my $fh = $self->get('ssh')->sftp->open('tst/tst.log')
   or $self->get('ssh')->die_with_error;
  
-print while <$fh>;
+while (my %entries = $dh->read) {
+#  print "$_\n" for keys %entries;
+  print "$entries{name}\n";
+  my $fh = $self->get('ssh')->sftp->open($remote_folder.'/'.$entries{name});
+  print while <$fh>;
+
+	$fh->seek(0);
+ 
+#  open(my $fh_, '>', $entries{name}) or die "Не могу открыть файл $!";
+  #print $fh_ "Мой первый отчет, сгенерированный с помощью perl\n";
+  #print $fh_ $_ while <$fh>;
+  my @DATA = <$fh>;
+  
+  $values{$entries{name}} = [@DATA];
+  
+ print Dumper(\%values);
+#  _write($entries{name}, \@DATA);
+  
+#  close $fh_;
+ 
+}
+
+
+#print while <$fh>;
 
 # (b) read a line at a time with SFTP
 #my $sftp = $ssh2->sftp;
@@ -75,13 +100,11 @@ print while <$fh>;
     return(\%values);
   }
 
-  sub _read {
-	my $handle = shift;
-	while (my $line = <$handle>) {
-		chomp $line;
-		$line =~ s/:.*$//;
-		print "found user '$line'\n";
-	}
+  sub _write {
+	my($path, $data) = @_;
+	open(my $fh, '>', $path) or die "Не могу открыть файл $!";
+	print $fh $_ for @{$data};
+	close $fh;
   }
 }
 1;

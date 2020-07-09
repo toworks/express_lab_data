@@ -62,17 +62,17 @@
     $log->save('i', "start thread pid $id");
 
 	# ssh create object
-	my $ssh = _ssh->new($log);
-	$ssh->set('DEBUG' => $DEBUG);
-	$ssh->set('host' => $conf->get('ssh')->{host});
-	$ssh->set('port' => $conf->get('ssh')->{port});
-	$ssh->set('user' => $conf->get('ssh')->{user});
-	$ssh->set('password' => $conf->get('ssh')->{password});
+	my $ssh_read = _ssh->new($log);
+	$ssh_read->set('DEBUG' => $DEBUG);
+	$ssh_read->set('host' => $conf->get('read')->{ssh}->{host});
+	$ssh_read->set('port' => $conf->get('read')->{ssh}->{port});
+	$ssh_read->set('user' => $conf->get('read')->{ssh}->{user});
+	$ssh_read->set('password' => $conf->get('read')->{ssh}->{password});
 
 
-	$ssh->connect;
-	print Dumper($ssh);
-	$ssh->read_file;
+	$ssh_read->connect;
+	print Dumper($ssh_read);
+	$ssh_read->read_file($conf->get('read')->{ssh}->{remote_folder}, $conf->get('read')->{ssh}->{local_folder});
 	
 exit;
 =comm
