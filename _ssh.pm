@@ -23,7 +23,7 @@ package _ssh;{
 				$fh->seek(0);
 				chomp(my @DATA = <$fh>);
 				$data{$entries{name}} = [@DATA];
-				print Dumper(\%data) if $self->{obj}->{'DEBUG'};
+				$self->{log}->save('i', "ssh read: ". Dumper(\%data)) if $self->{obj}->{'DEBUG'};
 				close $fh;
 			}
 			close $dh;

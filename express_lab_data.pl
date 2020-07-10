@@ -80,49 +80,24 @@
 	
 	$ssh_in->connect;
 	$ssh_out->connect;
-	
-	print Dumper($ssh_in);
+
 	while (1) {
 		
 		my $t0 = [gettimeofday];
-=comm		
+		
+		# step 1 - read files remote save to local
 		my $data = $ssh_in->read($conf->get('in')->{ssh}->{remote_folder}, $conf->get('in')->{ssh}->{filter});
 
 		$ssh_in->delete($conf->get('in')->{ssh}->{remote_folder}, $_) for keys %{$data};
 		
-		#print Dumper($data);
-		
 		&lwrite($conf->get('in')->{ssh}->{local_folder}, $data);
-=cut
-		my $data = &lread($conf->get('out')->{ssh}->{local_folder}, $conf->get('out')->{ssh}->{filter}, $conf->get('out')->{ssh}->{check_files});
 
-		#$ssh_in->write($conf->get('in')->{ssh}->{remote_folder}, $data);
+		# step 2 - read files (added if exists) save to remote
+		$data = &lread($conf->get('out')->{ssh}->{local_folder}, $conf->get('out')->{ssh}->{filter}, $conf->get('out')->{ssh}->{check_files});
+
 		$ssh_in->write($conf->get('out')->{ssh}->{remote_folder}, $data);
-		#$ssh_in->disconnect;
-		
-		print $_, "\n" for keys %{$data};
+		$ssh_in->disconnect;
 	
-=comm
-
-		my $weight = $reader->read();
-		my $status = ( defined($reader->get('stab')) ? $reader->get('stab') : 1);
-
-		$log->save('i', $conf->{'measuring'}->{id_scale}. ", " .
-						strftime("%Y-%m-%d %H:%M:%S", localtime time) .
-						" status: $status, $weight" ) if defined($weight) and (ref $weight ne 'ARRAY') and $DEBUG;
-		$log->save('i', $conf->{'measuring'}->{id_scale}. ", " .
-						strftime("%Y-%m-%d %H:%M:%S", localtime time) .
-						" status: $status, weight: ". join(" | ", @{$weight}) )  if defined($weight) and (ref $weight eq 'ARRAY') and $DEBUG;
-		print $conf->{'measuring'}->{id_scale}. ", " .
-						strftime("%Y-%m-%d %H:%M:%S", localtime time) .
-
-						" status: $status, $weight","\n" if defined($weight) and (ref $weight ne 'ARRAY') and $DEBUG;
-		print $conf->{'measuring'}->{id_scale}. ", " .
-						strftime("%Y-%m-%d %H:%M:%S", localtime time) .
-						" status: $status, weight: ", join(" | ", @{$weight}), "\n" if defined($weight) and (ref $weight eq 'ARRAY') and $DEBUG;
-
-		$sql->write_weight( ($conf->{'measuring'}->{id_scale}, strftime("%Y-%m-%d %H:%M:%S", localtime time), $status, $weight) ) if defined($weight);
-=cut
 		my $t1 = [gettimeofday];
 		my $tbetween = tv_interval $t0, $t1;
 		my $cycle;
@@ -164,7 +139,7 @@
 					unless ( grep {$_ eq $check_files->[$i]} @files ) {
 						print "element $i '" . $check_files->[$i] . "' of array 1 was not found in array 2\n" if $DEBUG;
 						push @files, $check_files->[$i];
-						# create local file if not exists
+						# create local file if exists
 						lwrite($folder, {$check_files->[$i] => ['']});
 					}
 				}
