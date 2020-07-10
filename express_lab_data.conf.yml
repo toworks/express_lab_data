@@ -6,6 +6,7 @@ in:
         password: _Start123
         remote_folder: tst/
         local_folder: log/
+        filter: (.*)\.txt$
 
 out:
     ssh:
@@ -15,6 +16,9 @@ out:
         password: _Start123
         remote_folder: ee/
         local_folder: C:\Users\saarhipov\Desktop\test\
+        filter: (.*)\.txt$
+        check_files:
+#        check_files: [1.txt,2.txt,3.txt,4.txt,5.txt,6.txt]
 
 app:
     cycle: 20

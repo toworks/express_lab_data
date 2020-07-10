@@ -9,7 +9,7 @@ package _ssh;{
   use Fcntl;
 
   sub read {
-    my($self, $folder) = @_;
+    my($self, $folder, $filter) = @_;
 	my(%data);
 
 	$self->connect() if ( $self->get('error') == 1 );
@@ -18,7 +18,7 @@ package _ssh;{
 			my $dh = $self->get('ssh')->sftp->opendir($folder) || die $self->get('ssh')->die_with_error;
 			while (my %entries = $dh->read) {
 				print "$entries{name}\n" if $self->{obj}->{'DEBUG'};
-				next if ($entries{name} =~ m/^\./);
+				next if ($entries{name} =~ m/^\./ or $entries{name} !~ m/$filter/i);
 				my $fh = $self->get('ssh')->sftp->open($folder.'/'.$entries{name}) || die $self->get('ssh')->die_with_error;
 				$fh->seek(0);
 				chomp(my @DATA = <$fh>);

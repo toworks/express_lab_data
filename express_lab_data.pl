@@ -86,7 +86,7 @@
 		
 		my $t0 = [gettimeofday];
 =comm		
-		my $data = $ssh_in->read($conf->get('in')->{ssh}->{remote_folder});
+		my $data = $ssh_in->read($conf->get('in')->{ssh}->{remote_folder}, $conf->get('in')->{ssh}->{filter});
 
 		$ssh_in->delete($conf->get('in')->{ssh}->{remote_folder}, $_) for keys %{$data};
 		
@@ -94,8 +94,8 @@
 		
 		&lwrite($conf->get('in')->{ssh}->{local_folder}, $data);
 =cut
-		my $data = &lread($conf->get('out')->{ssh}->{local_folder});
-		
+		my $data = &lread($conf->get('out')->{ssh}->{local_folder}, $conf->get('out')->{ssh}->{filter}, $conf->get('out')->{ssh}->{check_files});
+
 		#$ssh_in->write($conf->get('in')->{ssh}->{remote_folder}, $data);
 		$ssh_in->write($conf->get('out')->{ssh}->{remote_folder}, $data);
 		#$ssh_in->disconnect;
@@ -151,15 +151,28 @@
  }
 
  sub lread {
-	my($folder) = @_;
+	my($folder, $filter, $check_files) = @_;
 
 	my(%data);
 
 	eval{
 			opendir(my $dh, $folder) or die "Unable to open directory: $!";
 			my @files = readdir($dh);
+
+			if ( defined($check_files) ) {
+				for my $i (0..scalar @{$check_files} - 1 ) {
+					unless ( grep {$_ eq $check_files->[$i]} @files ) {
+						print "element $i '" . $check_files->[$i] . "' of array 1 was not found in array 2\n" if $DEBUG;
+						push @files, $check_files->[$i];
+						# create local file if not exists
+						lwrite($folder, {$check_files->[$i] => ['']});
+					}
+				}
+			}
+
 			foreach my $file (@files) {
-				next if ($file =~ m/^\./);
+				next if ($file =~ m/^\./ or $file !~ m/$filter/i);
+				$log->save('i', $file . "\tfilter: " . $filter) if $DEBUG;
 				open(my $fh, $folder.$file) or die "Unable to open file: $!";			
 				chomp(my @DATA = <$fh>);
 				$data{$file} = [@DATA];
